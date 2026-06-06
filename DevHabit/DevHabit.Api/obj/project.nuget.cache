@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "AqRqlQHz2pk=",
+  "success": true,
+  "projectFilePath": "/Users/nawarali/Desktop/DevHabit/DevHabit/DevHabit.Api/DevHabit.Api.csproj",
+  "expectedPackageFiles": [
+    "/Users/nawarali/.nuget/packages/microsoft.aspnetcore.openapi/10.0.6/microsoft.aspnetcore.openapi.10.0.6.nupkg.sha512",
+    "/Users/nawarali/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512",
+    "/Users/nawarali/.nuget/packages/sonaranalyzer.csharp/10.27.0.140913/sonaranalyzer.csharp.10.27.0.140913.nupkg.sha512"
+  ],
+  "logs": []
+}

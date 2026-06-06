@@ -1,0 +1,10 @@
+﻿services:
+  devhabit.api:
+    image: devhabit.api
+    build:
+      context: .
+      dockerfile: DevHabit.Api/Dockerfile
+    ports:
+      - 6000:8080
+      - 6001:8081
+
