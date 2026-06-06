@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevHabit.Api", "DevHabit.Api\DevHabit.Api.csproj", "{496F637C-4F0F-4B67-BBB8-C597544E381B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7B69BEFD-59B9-4C6A-B7E9-44D2BEC15B27}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A63C3889-FAAC-4FA2-9107-5A8294BF2941}"
 	ProjectSection(SolutionItems) = preProject
 		compose.yaml = compose.yaml
