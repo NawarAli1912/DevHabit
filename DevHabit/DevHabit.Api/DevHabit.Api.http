@@ -1,6 +1,123 @@
-@Api_HostAddress = http://localhost:6000
+@Api_HostAddress = https://localhost:6001
 
-GET {{Api_HostAddress}}/weatherforecast/
+
+GET {{Api_HostAddress}}/habits
 Accept: application/json
 
 ###
+GET {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+Accept: application/json
+
+###
+
+POST {{Api_HostAddress}}/habits
+Content-Type: application/json
+
+{
+    "name": "Daily Coding",
+    "description": null,
+    "type": 2,
+    "frequency": {
+        "type": 2,
+        "timesInPeriod": 1
+    },
+    "target": {
+        "value": 30,
+        "unit": "minutes"
+    }
+}
+
+###
+
+PUT {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+Content-Type: application/json
+
+{
+    "name": "Daily Coding",
+    "description": "Code every day to improve skills",
+    "type": 2,
+    "frequency": {
+        "type": 2,
+        "timesInPeriod": 1
+    },
+    "target": {
+        "value": 60,
+        "unit": "minutes"
+    },
+    "endDate": null,
+    "milestone": null
+}
+
+###
+
+# Patch: rename a habit and update its description
+PATCH {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+Content-Type: application/json-patch+json
+
+[
+    {
+        "op": "replace",
+        "path": "/name",
+        "value": "Daily Coding (updated)"
+    },
+    {
+        "op": "replace",
+        "path": "/description",
+        "value": "Updated via JSON Patch"
+    }
+]
+
+###
+
+# Patch: clear the description
+PATCH {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+Content-Type: application/json-patch+json
+
+[
+    {
+        "op": "remove",
+        "path": "/description"
+    }
+]
+
+###
+
+# Patch: copy the name into the description, then rename
+PATCH {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+Content-Type: application/json-patch+json
+
+[
+    {
+        "op": "copy",
+        "from": "/name",
+        "path": "/description"
+    },
+    {
+        "op": "replace",
+        "path": "/name",
+        "value": "Deep Work"
+    }
+]
+
+###
+
+# Patch: test guard — only applies if the name matches the expected value
+PATCH {{Api_HostAddress}}/habits/h_01HNK4V8J5T6MW8X9Y0Z1A2B3C
+Content-Type: application/json-patch+json
+
+[
+    {
+        "op": "test",
+        "path": "/name",
+        "value": "Deep Work"
+    },
+    {
+        "op": "replace",
+        "path": "/description",
+        "value": "Only applied when the test op passes"
+    }
+]
+
+###
+
+DELETE {{Api_HostAddress}}/habits/h_01HNK4V8J5T6MW8X9Y0Z1A2B3C
