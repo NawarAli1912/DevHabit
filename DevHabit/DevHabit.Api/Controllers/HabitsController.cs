@@ -27,14 +27,14 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<HabitDto>> GetHabit(string id)
+    public async Task<ActionResult<HabitWithTagsDto>> GetHabit(string id)
     {
-        HabitDto habit = await _dbContext
+        HabitWithTagsDto? habit = await _dbContext
             .Habits
             .Where(item => item.Id == id)
-            .Select(HabitQueries.ProjectToDto())
+            .Select(HabitQueries.ProjectToDtoWithTags())
             .FirstOrDefaultAsync();
-        
+
         return habit != null ? Ok(habit) : NotFound();
     }
 
@@ -78,9 +78,9 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
 
         HabitDto dto = habit.ToDto();
         
-        patchDocument.ApplyTo(dto);
+        patchDocument.ApplyTo(dto, ModelState);
 
-        if (!ModelState.IsValid)
+        if (!TryValidateModel(dto))
         {
             return ValidationProblem(ModelState);
         }

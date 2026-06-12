@@ -25,6 +25,7 @@ public sealed class HabitQueries
             },
             Status = item.Status,
             IsArchived = item.IsArchived,
+            EndDate = item.EndDate,
             Milestone = item.Milestone == null
                 ? null
                 : new MilestoneDto
@@ -35,6 +36,41 @@ public sealed class HabitQueries
             CreatedAtUtc = item.CreatedAtUtc,
             UpdatedAtUtc = item.UpdatedAtUtc,
             LastCompletedAtUtc = item.LastCompletedAtUtc,
+        };
+    }
+
+    public static Expression<Func<Habit, HabitWithTagsDto>> ProjectToDtoWithTags()
+    {
+        return item => new HabitWithTagsDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Description = item.Description,
+            Type = item.Type,
+            Frequency = new FrequencyDto
+            {
+                Type = item.Frequency.Type,
+                TimesInPeriod = item.Frequency.TimesInPeriod
+            },
+            Target = new TargetDto
+            {
+                Value = item.Target.Value,
+                Unit = item.Target.Unit
+            },
+            Status = item.Status,
+            IsArchived = item.IsArchived,
+            EndDate = item.EndDate,
+            Milestone = item.Milestone == null
+                ? null
+                : new MilestoneDto
+                {
+                    Target = item.Milestone.Target,
+                    Current = item.Milestone.Current
+                },
+            CreatedAtUtc = item.CreatedAtUtc,
+            UpdatedAtUtc = item.UpdatedAtUtc,
+            LastCompletedAtUtc = item.LastCompletedAtUtc,
+            Tags = item.Tags.Select(t => t.Name).ToArray()
         };
     }
 }
@@ -94,6 +130,7 @@ public static class HabitMappings
             },
             Status = habit.Status,
             IsArchived = habit.IsArchived,
+            EndDate = habit.EndDate,
             Milestone = habit.Milestone == null
                 ? null
                 : new MilestoneDto

@@ -27,6 +27,10 @@ public class Habit
     public DateTime? UpdatedAtUtc { get; set; }
     
     public DateTime? LastCompletedAtUtc { get; set; }
+
+    public List<HabitTag> HabitTags { get; set; }
+
+    public List<Tag> Tags { get; set; }
 }
 
 public sealed class Milestone

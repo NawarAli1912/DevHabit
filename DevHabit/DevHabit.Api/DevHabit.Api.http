@@ -120,4 +120,55 @@ Content-Type: application/json-patch+json
 
 ###
 
-DELETE {{Api_HostAddress}}/habits/h_01HNK4V8J5T6MW8X9Y0Z1A2B3C
+DELETE {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
+
+###
+
+GET {{Api_HostAddress}}/tags
+Accept: application/json
+
+###
+
+GET {{Api_HostAddress}}/tags/t_019eb335-04e4-7fac-9957-e96091dda4d1
+Accept: application/json
+
+###
+
+POST {{Api_HostAddress}}/tags
+Content-Type: application/json
+
+{
+    "name": "backend",
+    "description": "Backend development habits"
+}
+
+###
+
+PUT {{Api_HostAddress}}/tags/t_019eb335-04e4-7fac-9957-e96091dda4d1
+Content-Type: application/json
+
+{
+    "name": "backend",
+    "description": "Updated description"
+}
+
+###
+
+DELETE {{Api_HostAddress}}/tags/t_019eb335-04e4-7fac-9957-e96091dda4d1
+
+###
+
+# Replace the full set of tags on a habit (upsert semantics)
+PUT {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1/tags
+Content-Type: application/json
+
+{
+    "tagIds": [
+        "t_019eb335-04e4-7fac-9957-e96091dda4d1"
+    ]
+}
+
+###
+
+# Remove a single tag from a habit
+DELETE {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1/tags/t_019eb335-04e4-7fac-9957-e96091dda4d1
