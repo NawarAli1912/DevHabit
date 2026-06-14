@@ -1,7 +1,8 @@
-using System.Linq.Expressions;
 using DevHabit.Api.Database;
+using DevHabit.Api.DTOs.Common;
 using DevHabit.Api.DTOs.Habits;
 using DevHabit.Api.Entities;
+using DevHabit.Api.Services.Sorting;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
@@ -17,15 +18,47 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     private readonly ApplicationDbContext _dbContext = dbContext;
 
     [HttpGet]
-    public async Task<ActionResult<HabitsCollectionDto>> GetHabits()
+    public async Task<IActionResult> GetHabits(
+        [FromQuery] HabitsQueryParameters query,
+        SortMappingProvider sortMappingProvider)
     {
-        List<HabitDto> habitsDto = await _dbContext.Habits.Select(HabitQueries
-                .ProjectToDto())
-                .ToListAsync();
-        return Ok(new HabitsCollectionDto
+        if (!sortMappingProvider.ValidateMappings<HabitDto, Habit>(query.Sort))
         {
-            Data = habitsDto
-        });
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: $"The provided sort parameter isn't valid: '{query.Sort}'");
+        }
+
+        string? search = query.Search?.Trim().ToLower();
+
+        SortMapping[] sortMappings = sortMappingProvider.GetMappings<HabitDto, Habit>();
+
+        IQueryable<HabitDto> habitsQuery = _dbContext
+            .Habits
+            .Where(h => search == null ||
+                        h.Name.ToLower().Contains(search) ||
+                        h.Description != null && h.Description.ToLower().Contains(search))
+            .Where(h => query.Type == null || h.Type == query.Type)
+            .Where(h => query.Status == null || h.Status == query.Status)
+            .ApplySort(query.Sort, sortMappings)
+            .Select(HabitQueries.ProjectToDto());
+
+        int totalCount = await habitsQuery.CountAsync();
+
+        List<HabitDto> habits = await habitsQuery
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        var paginationResult = new PaginationResult<HabitDto>
+        {
+            Items = habits,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = totalCount
+        };
+
+        return Ok(paginationResult);
     }
 
     [HttpGet("{id}")]

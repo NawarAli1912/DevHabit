@@ -26,7 +26,7 @@ public sealed class TagsController(ApplicationDbContext dbContext, ProblemDetail
 
         return Ok(new TagsCollectionDto
         {
-            Data = tags
+            Items = tags
         });
     }
 
@@ -51,16 +51,16 @@ public sealed class TagsController(ApplicationDbContext dbContext, ProblemDetail
         {
             ProblemDetails problemDetails =
                 _problemDetailsFactory.CreateProblemDetails(HttpContext, StatusCodes.Status400BadRequest);
-
+            
             problemDetails.Extensions.Add("errors", validationResult.ToDictionary());
             return BadRequest(problemDetails);
         }
-
+        
         Tag tag = request.ToEntity();
 
         if (await _dbContext.Tags.AnyAsync(t => t.Name == tag.Name))
         {
-            return
+            return 
                 Problem(detail: $"The tag '{tag.Name}' already exists",
                     statusCode: StatusCodes.Status409Conflict);
         }

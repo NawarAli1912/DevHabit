@@ -285,6 +285,10 @@ dotnet_diagnostic.CA1309.severity = none
 # CA1311: Specify a culture or use an invariant version
 dotnet_diagnostic.CA1311.severity = none
 
+# CA1862: Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+# Disabled: EF Core cannot translate the StringComparison overloads to SQL; ToLower() is required in queries.
+dotnet_diagnostic.CA1862.severity = none
+
 # CA1515: Consider making public types internal
 dotnet_diagnostic.CA1515.severity = none
 
