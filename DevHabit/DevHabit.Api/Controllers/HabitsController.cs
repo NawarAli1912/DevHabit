@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using DevHabit.Api.Database;
 using DevHabit.Api.DTOs.Habits;
 using DevHabit.Api.Entities;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,14 +41,25 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     }
 
     [HttpPost]
-    public async Task<ActionResult<HabitDto>> CreateHabit(CreateHabitDto request)
+    public async Task<ActionResult<HabitDto>> CreateHabit(CreateHabitDto request, IValidator<CreateHabitDto> validator)
     {
+        ValidationResult validationResult = await validator.ValidateAsync(request);
         Habit habit = request.ToEntity();
-        
+
+        if (!validationResult.IsValid)
+        {
+            ProblemDetails problemDetails = ProblemDetailsFactory.CreateProblemDetails(
+                HttpContext, StatusCodes.Status400BadRequest);
+
+            problemDetails.Extensions.Add("errors", validationResult.ToDictionary());
+
+            return BadRequest(problemDetails);
+        }
+
         _dbContext.Habits.Add(habit);
-        
+
         await _dbContext.SaveChangesAsync();
-        
+
         return CreatedAtAction(nameof(GetHabit), new { id = habit.Id }, habit.ToDto());
     }
 
@@ -61,7 +74,7 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
         }
 
         habit.UpdateFromDto(request);
-        
+
         await _dbContext.SaveChangesAsync();
 
         return NoContent();
@@ -77,14 +90,14 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
         }
 
         HabitDto dto = habit.ToDto();
-        
+
         patchDocument.ApplyTo(dto, ModelState);
 
         if (!TryValidateModel(dto))
         {
             return ValidationProblem(ModelState);
         }
-        
+
         habit.Name = dto.Name;
         habit.Description = dto.Description;
         habit.UpdatedAtUtc = DateTime.UtcNow;

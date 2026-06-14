@@ -5,6 +5,7 @@ GET {{Api_HostAddress}}/habits
 Accept: application/json
 
 ###
+
 GET {{Api_HostAddress}}/habits/h_019eb335-04e4-7fac-9957-e96091dda4d1
 Accept: application/json
 
@@ -138,7 +139,7 @@ POST {{Api_HostAddress}}/tags
 Content-Type: application/json
 
 {
-    "name": "backend",
+    "name": null,
     "description": "Backend development habits"
 }
 
