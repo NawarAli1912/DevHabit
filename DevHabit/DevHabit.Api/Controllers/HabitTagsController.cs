@@ -1,4 +1,4 @@
-using DevHabit.Api.Database;
+﻿using DevHabit.Api.Database;
 using DevHabit.Api.DTOs.HabitTags;
 using DevHabit.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +10,10 @@ namespace DevHabit.Api.Controllers;
 [Route("habits/{habitId}/tags")]
 public sealed class HabitTagsController(ApplicationDbContext dbContext) : ControllerBase
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
-
     [HttpPut]
-    public async Task<ActionResult> UpsertHabitTags(string habitId, UpsertHabitTagsDto request)
+    public async Task<ActionResult> UpsertHabitTags(string habitId, UpsertHabitTagsDto upsertHabitTagsDto)
     {
-        Habit? habit = await _dbContext.Habits
+        Habit? habit = await dbContext.Habits
             .Include(h => h.HabitTags)
             .FirstOrDefaultAsync(h => h.Id == habitId);
 
@@ -25,26 +23,25 @@ public sealed class HabitTagsController(ApplicationDbContext dbContext) : Contro
         }
 
         var currentTagIds = habit.HabitTags.Select(ht => ht.TagId).ToHashSet();
-
-        if (currentTagIds.SetEquals(request.TagIds))
+        if (currentTagIds.SetEquals(upsertHabitTagsDto.TagIds))
         {
             return NoContent();
         }
 
-        List<string> existingTagIds = await _dbContext
+        List<string> existingTagIds = await dbContext
             .Tags
-            .Where(t => request.TagIds.Contains(t.Id))
+            .Where(t => upsertHabitTagsDto.TagIds.Contains(t.Id))
             .Select(t => t.Id)
             .ToListAsync();
 
-        if (existingTagIds.Count != request.TagIds.Count)
+        if (existingTagIds.Count != upsertHabitTagsDto.TagIds.Count)
         {
             return BadRequest("One or more tag IDs is invalid");
         }
 
-        habit.HabitTags.RemoveAll(ht => !request.TagIds.Contains(ht.TagId));
+        habit.HabitTags.RemoveAll(ht => !upsertHabitTagsDto.TagIds.Contains(ht.TagId));
 
-        string[] tagIdsToAdd = [.. request.TagIds.Except(currentTagIds)];
+        string[] tagIdsToAdd = upsertHabitTagsDto.TagIds.Except(currentTagIds).ToArray();
         habit.HabitTags.AddRange(tagIdsToAdd.Select(tagId => new HabitTag
         {
             HabitId = habitId,
@@ -52,7 +49,7 @@ public sealed class HabitTagsController(ApplicationDbContext dbContext) : Contro
             CreatedAtUtc = DateTime.UtcNow
         }));
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -60,7 +57,7 @@ public sealed class HabitTagsController(ApplicationDbContext dbContext) : Contro
     [HttpDelete("{tagId}")]
     public async Task<ActionResult> DeleteHabitTag(string habitId, string tagId)
     {
-        HabitTag? habitTag = await _dbContext.HabitTags
+        HabitTag? habitTag = await dbContext.HabitTags
             .SingleOrDefaultAsync(ht => ht.HabitId == habitId && ht.TagId == tagId);
 
         if (habitTag is null)
@@ -68,9 +65,9 @@ public sealed class HabitTagsController(ApplicationDbContext dbContext) : Contro
             return NotFound();
         }
 
-        _dbContext.HabitTags.Remove(habitTag);
+        dbContext.HabitTags.Remove(habitTag);
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }

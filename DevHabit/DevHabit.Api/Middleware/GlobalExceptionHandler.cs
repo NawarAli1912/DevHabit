@@ -1,13 +1,12 @@
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DevHabit.Api.Middlewares;
+namespace DevHabit.Api.Middleware;
 
 public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService) : IExceptionHandler
 {
-    
     public ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext, 
+        HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
@@ -18,8 +17,8 @@ public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetails
             ProblemDetails = new ProblemDetails
             {
                 Title = "Internal Server Error",
-                Status = StatusCodes.Status500InternalServerError,
-            },
+                Detail = "An error occurred while processing your request. Please try again"
+            }
         });
     }
 }

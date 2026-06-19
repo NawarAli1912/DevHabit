@@ -1,10 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DevHabit.Api.DTOs.Common;
 
 public sealed record PaginationResult<T> : ICollectionResponse<T>
 {
-    public required List<T> Items { get; init; }
+    public List<T> Items { get; init; }
     public int Page { get; init; }
     public int PageSize { get; init; }
     public int TotalCount { get; init; }

@@ -1,81 +1,9 @@
-using System.Linq.Expressions;
-using DevHabit.Api.Entities;
+﻿using DevHabit.Api.Entities;
 using DevHabit.Api.Services.Sorting;
 
 namespace DevHabit.Api.DTOs.Habits;
 
-public sealed class HabitQueries
-{
-    public static Expression<Func<Habit, HabitDto>> ProjectToDto()
-    {
-        return item => new HabitDto
-        {
-            Id = item.Id,
-            Name = item.Name,
-            Description = item.Description,
-            Type = item.Type,
-            Frequency = new FrequencyDto
-            {
-                Type = item.Frequency.Type,
-                TimesInPeriod = item.Frequency.TimesInPeriod
-            },
-            Target = new TargetDto
-            {
-                Value = item.Target.Value,
-                Unit = item.Target.Unit
-            },
-            Status = item.Status,
-            IsArchived = item.IsArchived,
-            EndDate = item.EndDate,
-            Milestone = item.Milestone == null
-                ? null
-                : new MilestoneDto
-                {
-                    Target = item.Milestone.Target,
-                    Current = item.Milestone.Current
-                },
-            CreatedAtUtc = item.CreatedAtUtc,
-            UpdatedAtUtc = item.UpdatedAtUtc,
-            LastCompletedAtUtc = item.LastCompletedAtUtc,
-        };
-    }
-
-    public static Expression<Func<Habit, HabitWithTagsDto>> ProjectToDtoWithTags()
-    {
-        return item => new HabitWithTagsDto
-        {
-            Id = item.Id,
-            Name = item.Name,
-            Description = item.Description,
-            Type = item.Type,
-            Frequency = new FrequencyDto
-            {
-                Type = item.Frequency.Type,
-                TimesInPeriod = item.Frequency.TimesInPeriod
-            },
-            Target = new TargetDto
-            {
-                Value = item.Target.Value,
-                Unit = item.Target.Unit
-            },
-            Status = item.Status,
-            IsArchived = item.IsArchived,
-            EndDate = item.EndDate,
-            Milestone = item.Milestone == null
-                ? null
-                : new MilestoneDto
-                {
-                    Target = item.Milestone.Target,
-                    Current = item.Milestone.Current
-                },
-            CreatedAtUtc = item.CreatedAtUtc,
-            UpdatedAtUtc = item.UpdatedAtUtc,
-            LastCompletedAtUtc = item.LastCompletedAtUtc,
-            Tags = item.Tags.Select(t => t.Name).ToArray()
-        };
-    }
-}
-public static class HabitMappings
+internal static class HabitMappings
 {
     public static readonly SortMappingDefinition<HabitDto, Habit> SortMapping = new()
     {
@@ -103,40 +31,6 @@ public static class HabitMappings
             new SortMapping(nameof(HabitDto.LastCompletedAtUtc), nameof(Habit.LastCompletedAtUtc))
         ]
     };
-
-    public static Habit ToEntity(this CreateHabitDto habitDto)
-    {
-        Habit habit = new()
-        {
-            Id = $"h_{Guid.CreateVersion7()}",
-            Name = habitDto.Name,
-            Description = habitDto.Description,
-            Type = habitDto.Type,
-            Frequency = new Frequency()
-            {
-                Type = habitDto.Frequency.Type,
-                TimesInPeriod = habitDto.Frequency.TimesInPeriod,
-            },
-            Target = new Target()
-            {
-                Unit = habitDto.Target.Unit,
-                Value = habitDto.Target.Value,
-            },
-            Status = HabitStatus.Ongoing,
-            IsArchived = false,
-            EndDate = habitDto.EndDate,
-            Milestone = habitDto.Milestone is not null
-                ? new Milestone()
-                {
-                    Target = habitDto.Milestone.Target,
-                    Current = 0
-                }
-                : null,
-            CreatedAtUtc = DateTime.UtcNow,
-        };
-        
-        return habit;
-    }
 
     public static HabitDto ToDto(this Habit habit)
     {
@@ -168,33 +62,74 @@ public static class HabitMappings
                 },
             CreatedAtUtc = habit.CreatedAtUtc,
             UpdatedAtUtc = habit.UpdatedAtUtc,
-            LastCompletedAtUtc = habit.LastCompletedAtUtc,
+            LastCompletedAtUtc = habit.LastCompletedAtUtc
         };
     }
 
-    public static void UpdateFromDto(this Habit habit, UpdateHabitDto habitDto)
+    public static Habit ToEntity(this CreateHabitDto dto)
     {
-        habit.Name = habitDto.Name;
-        habit.Description = habitDto.Description;
-        habit.Type = habitDto.Type;
-        habit.EndDate = habitDto.EndDate;
+        Habit habit = new()
+        {
+            Id = $"h_{Guid.CreateVersion7()}",
+            Name = dto.Name,
+            Description = dto.Description,
+            Type = dto.Type,
+            Frequency = new Frequency
+            {
+                Type = dto.Frequency.Type,
+                TimesInPeriod = dto.Frequency.TimesInPeriod
+            },
+            Target = new Target
+            {
+                Value = dto.Target.Value,
+                Unit = dto.Target.Unit
+            },
+            Status = HabitStatus.Ongoing,
+            IsArchived = false,
+            EndDate = dto.EndDate,
+            Milestone = dto.Milestone is not null
+                ? new Milestone
+                {
+                    Target = dto.Milestone.Target,
+                    Current = 0 // Initialize current progress to 0
+                }
+                : null,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        return habit;
+    }
+
+    public static void UpdateFromDto(this Habit habit, UpdateHabitDto dto)
+    {
+        // Update basic properties
+        habit.Name = dto.Name;
+        habit.Description = dto.Description;
+        habit.Type = dto.Type;
+        habit.EndDate = dto.EndDate;
+
+        // Update frequency (assuming it's immutable, create new instance)
         habit.Frequency = new Frequency
         {
-            Type = habitDto.Frequency.Type,
-            TimesInPeriod = habitDto.Frequency.TimesInPeriod
+            Type = dto.Frequency.Type,
+            TimesInPeriod = dto.Frequency.TimesInPeriod
         };
+
+        // Update target
         habit.Target = new Target
         {
-            Value = habitDto.Target.Value,
-            Unit = habitDto.Target.Unit
+            Value = dto.Target.Value,
+            Unit = dto.Target.Unit
         };
-        if (habitDto.Milestone is not null)
-        {
-            habit.Milestone ??= new Milestone();
-            habit.Milestone.Target = habitDto.Milestone.Target;
 
+        // Update milestone if provided
+        if (dto.Milestone != null)
+        {
+            habit.Milestone ??= new Milestone(); // Create new if doesn't exist
+            habit.Milestone.Target = dto.Milestone.Target;
+            // Note: We don't update Milestone.Current from DTO to preserve progress
         }
-        
+
         habit.UpdatedAtUtc = DateTime.UtcNow;
     }
 }

@@ -1,5 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Dynamic;
+﻿using System.Dynamic;
 using DevHabit.Api.Database;
 using DevHabit.Api.DTOs.Common;
 using DevHabit.Api.DTOs.Habits;
@@ -7,7 +6,6 @@ using DevHabit.Api.Entities;
 using DevHabit.Api.Services;
 using DevHabit.Api.Services.Sorting;
 using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +16,6 @@ namespace DevHabit.Api.Controllers;
 [Route("habits")]
 public sealed class HabitsController(ApplicationDbContext dbContext) : ControllerBase
 {
-    private readonly ApplicationDbContext _dbContext = dbContext;
-
     [HttpGet]
     public async Task<IActionResult> GetHabits(
         [FromQuery] HabitsQueryParameters query,
@@ -40,15 +36,15 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
                 detail: $"The provided data shaping fields aren't valid: '{query.Fields}'");
         }
 
-        string? search = query.Search?.Trim().ToLower();
+        query.Search ??= query.Search?.Trim().ToLower();
 
         SortMapping[] sortMappings = sortMappingProvider.GetMappings<HabitDto, Habit>();
 
-        IQueryable<HabitDto> habitsQuery = _dbContext
+        IQueryable<HabitDto> habitsQuery = dbContext
             .Habits
-            .Where(h => search == null ||
-                        h.Name.ToLower().Contains(search) ||
-                        h.Description != null && h.Description.ToLower().Contains(search))
+            .Where(h => query.Search == null ||
+                        h.Name.ToLower().Contains(query.Search) ||
+                        h.Description != null && h.Description.ToLower().Contains(query.Search))
             .Where(h => query.Type == null || h.Type == query.Type)
             .Where(h => query.Status == null || h.Status == query.Status)
             .ApplySort(query.Sort, sortMappings)
@@ -85,9 +81,9 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
                 detail: $"The provided data shaping fields aren't valid: '{fields}'");
         }
 
-        HabitWithTagsDto? habit = await _dbContext
+        HabitWithTagsDto? habit = await dbContext
             .Habits
-            .Where(item => item.Id == id)
+            .Where(h => h.Id == id)
             .Select(HabitQueries.ProjectToDtoWithTags())
             .FirstOrDefaultAsync();
 
@@ -102,41 +98,36 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     }
 
     [HttpPost]
-    public async Task<ActionResult<HabitDto>> CreateHabit(CreateHabitDto request, IValidator<CreateHabitDto> validator)
-    { 
-        ValidationResult validationResult = await validator.ValidateAsync(request);
-        Habit habit = request.ToEntity();
+    public async Task<ActionResult<HabitDto>> CreateHabit(
+        CreateHabitDto createHabitDto,
+        IValidator<CreateHabitDto> validator)
+    {
+        await validator.ValidateAndThrowAsync(createHabitDto);
 
-        if (!validationResult.IsValid)
-        {
-            ProblemDetails problemDetails = ProblemDetailsFactory.CreateProblemDetails(
-                HttpContext, StatusCodes.Status400BadRequest);
-            
-            problemDetails.Extensions.Add("errors", validationResult.ToDictionary());
-            
-            return BadRequest(problemDetails);
-        }
-        
-        _dbContext.Habits.Add(habit);
-        
-        await _dbContext.SaveChangesAsync();
-        
-        return CreatedAtAction(nameof(GetHabit), new { id = habit.Id }, habit.ToDto());
+        Habit habit = createHabitDto.ToEntity();
+
+        dbContext.Habits.Add(habit);
+
+        await dbContext.SaveChangesAsync();
+
+        HabitDto habitDto = habit.ToDto();
+
+        return CreatedAtAction(nameof(GetHabit), new { id = habitDto.Id }, habitDto);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateHabit(string id, UpdateHabitDto request)
+    public async Task<ActionResult> UpdateHabit(string id, UpdateHabitDto updateHabitDto)
     {
-        Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+        Habit? habit = await dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
 
         if (habit is null)
         {
             return NotFound();
         }
 
-        habit.UpdateFromDto(request);
-        
-        await _dbContext.SaveChangesAsync();
+        habit.UpdateFromDto(updateHabitDto);
+
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -144,26 +135,27 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     [HttpPatch("{id}")]
     public async Task<ActionResult> PatchHabit(string id, JsonPatchDocument<HabitDto> patchDocument)
     {
-        Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+        Habit? habit = await dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+
         if (habit is null)
         {
             return NotFound();
         }
 
-        HabitDto dto = habit.ToDto();
-        
-        patchDocument.ApplyTo(dto, ModelState);
+        HabitDto habitDto = habit.ToDto();
 
-        if (!TryValidateModel(dto))
+        patchDocument.ApplyTo(habitDto, ModelState);
+
+        if (!TryValidateModel(habitDto))
         {
             return ValidationProblem(ModelState);
         }
-        
-        habit.Name = dto.Name;
-        habit.Description = dto.Description;
+
+        habit.Name = habitDto.Name;
+        habit.Description = habitDto.Description;
         habit.UpdatedAtUtc = DateTime.UtcNow;
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -171,16 +163,16 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteHabit(string id)
     {
-        Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+        Habit? habit = await dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
 
         if (habit is null)
         {
             return NotFound();
         }
 
-        _dbContext.Habits.Remove(habit);
+        dbContext.Habits.Remove(habit);
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }

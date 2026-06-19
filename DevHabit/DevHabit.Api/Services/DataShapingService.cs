@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Dynamic;
 using System.Reflection;
 
@@ -19,7 +19,7 @@ public sealed class DataShapingService
             typeof(T),
             t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
 
-        if (fieldsSet.Count != 0)
+        if (fieldsSet.Any())
         {
             propertyInfos = propertyInfos
                 .Where(p => fieldsSet.Contains(p.Name))
@@ -47,7 +47,7 @@ public sealed class DataShapingService
             typeof(T),
             t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
 
-        if (fieldsSet.Count != 0)
+        if (fieldsSet.Any())
         {
             propertyInfos = propertyInfos
                 .Where(p => fieldsSet.Contains(p.Name))
