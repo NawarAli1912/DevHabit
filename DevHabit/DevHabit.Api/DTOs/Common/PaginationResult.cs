@@ -2,15 +2,27 @@
 
 namespace DevHabit.Api.DTOs.Common;
 
-public sealed record PaginationResult<T> : ICollectionResponse<T>
+public interface ILinksResponse
+{
+    List<LinkDto> Links { get; set; }
+}
+
+public sealed record PaginationResult<T> : ICollectionResponse<T>, ILinksResponse
 {
     public List<T> Items { get; init; }
+    
     public int Page { get; init; }
+    
     public int PageSize { get; init; }
+    
     public int TotalCount { get; init; }
-
+    
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    
+    public List<LinkDto> Links { get; set; }
+    
     public bool HasPreviousPage => Page > 1;
+    
     public bool HasNextPage => Page < TotalPages;
 
     public static async Task<PaginationResult<T>> CreateAsync(

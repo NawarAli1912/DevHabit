@@ -8,13 +8,17 @@ builder
     .AddErrorHandling()
     .AddDatabase()
     .AddObservability()
-    .AddApplicationServices();
+    .AddApplicationServices()
+    .AddCorsPolicy();
 
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Dev-only: let the Vue API Explorer call the API from the browser.
+    app.UseCors(DevHabit.Api.DependencyInjection.ExplorerCorsPolicy);
 
     await app.ApplyMigrationsAsync();
 }

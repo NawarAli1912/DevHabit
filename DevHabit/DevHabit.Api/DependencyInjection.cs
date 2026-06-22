@@ -18,6 +18,37 @@ namespace DevHabit.Api;
 
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Name of the development CORS policy that lets the Vue API Explorer
+    /// (Vite dev/preview servers) call this API from the browser.
+    /// </summary>
+    public const string ExplorerCorsPolicy = "DevHabitExplorer";
+
+    public static WebApplicationBuilder AddCorsPolicy(this WebApplicationBuilder builder)
+    {
+        // Allow overriding via config ("Cors:AllowedOrigins"); default to the Vite
+        // dev (5173) and preview (4173) origins on both http and https.
+        string[] allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ??
+        [
+            "http://localhost:5173", "https://localhost:5173",
+            "http://localhost:4173", "https://localhost:4173"
+        ];
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(ExplorerCorsPolicy, policy => policy
+                .WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                // So the explorer can read the Location header after a 201 Created.
+                .WithExposedHeaders("Location"));
+        });
+
+        return builder;
+    }
+
     public static WebApplicationBuilder AddControllers(this WebApplicationBuilder builder)
     {
         builder.Services.AddControllers(options =>
@@ -29,7 +60,7 @@ public static class DependencyInjection
             .AddXmlSerializerFormatters();
 
         builder.Services.AddOpenApi();
-
+        
         return builder;
     }
 
@@ -87,12 +118,14 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+        builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddTransient<SortMappingProvider>();
         builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<HabitDto, Habit>>(_ =>
             HabitMappings.SortMapping);
 
         builder.Services.AddTransient<DataShapingService>();
+        builder.Services.AddTransient<LinkService>();
 
         return builder;
     }
