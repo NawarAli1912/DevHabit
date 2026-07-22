@@ -1,0 +1,6 @@
+{
+  "inject": [
+    { "path": "docs/STATE.md", "enabled": true }
+  ],
+  "token_budget": 4000
+}

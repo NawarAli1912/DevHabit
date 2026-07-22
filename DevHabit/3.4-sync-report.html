@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevHabit — Sync to 3.4 (HATEOAS Start)</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1d212b; --border: #2a2f3a;
+    --text: #e6e9ef; --muted: #9aa3b2; --accent: #5b9dff; --green: #3fb950;
+    --amber: #d29922; --red: #f85149; --purple: #bc8cff;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55; font-size: 15px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--muted); }
+  .pill.ok { color: var(--green); border-color: rgba(63,185,80,.4); }
+  .pill.keep { color: var(--purple); border-color: rgba(188,140,255,.4); }
+  h2 { font-size: 18px; margin: 36px 0 14px; letter-spacing: -0.01em; display:flex; align-items:center; gap:8px; }
+  h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display:inline-block; }
+  p { color: var(--text); }
+  .lead { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px){ .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .card h3 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  ul { margin: 0; padding-left: 0; list-style: none; }
+  li { padding: 5px 0; border-bottom: 1px dashed var(--border); }
+  li:last-child { border-bottom: none; }
+  code { font-family: var(--mono); font-size: 12.5px; background: var(--panel2);
+    padding: 1px 6px; border-radius: 5px; color: #cdd6f4; }
+  .tag { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+  .t-new { background: rgba(63,185,80,.15); color: var(--green); }
+  .t-move { background: rgba(91,157,255,.15); color: var(--accent); }
+  .t-del { background: rgba(248,81,73,.15); color: var(--red); }
+  .t-fix { background: rgba(210,153,34,.15); color: var(--amber); }
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td.file { font-family: var(--mono); font-size: 12.5px; color: #cdd6f4; white-space: nowrap; }
+  .keepbox { background: linear-gradient(180deg, rgba(188,140,255,.08), transparent); border: 1px solid rgba(188,140,255,.3); }
+  .note { font-size: 13px; color: var(--muted); }
+  .build { display: flex; align-items: center; gap: 12px; background: var(--panel);
+    border: 1px solid rgba(63,185,80,.4); border-radius: 12px; padding: 16px 18px; }
+  .build .big { font-size: 22px; }
+  footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; }
+  .arrow { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>DevHabit — Synced to the 3.4 “Implementing HATEOAS (Start)” baseline</h1>
+    <div class="sub">Aligned your repo's application code with the course's pre-HATEOAS structure, on your terms.</div>
+    <div class="pills">
+      <span class="pill ok">✓ Build: 0 warnings / 0 errors</span>
+      <span class="pill keep">Kept .NET 10 + your packages</span>
+      <span class="pill keep">Kept <code>TimesInPeriod</code> — no migration</span>
+      <span class="pill">Scope: full structural match</span>
+    </div>
+  </header>
+
+  <p class="lead">
+    Both your code and the 3.4 folder sit at the same point — just after data shaping, right before HATEOAS.
+    The differences were <strong>organization, conventions, and a few bug fixes</strong>, not features. Per your two
+    choices, I mirrored 3.4's file/folder layout and code style exactly, but preserved your .NET 10 setup and the
+    <code>TimesInPeriod</code> property name (so your database and migrations stay untouched).
+  </p>
+
+  <h2><span class="dot"></span>New files (extracted to match 3.4's one-type-per-file layout)</h2>
+  <table>
+    <tr><th>File</th><th>What</th><th>Pulled out of</th></tr>
+    <tr><td class="file">DependencyInjection.cs <span class="tag t-new">new</span></td><td>Five <code>Add*</code> builder extensions (controllers, error handling, database, observability, app services)</td><td class="note">inline in <code>Program.cs</code></td></tr>
+    <tr><td class="file">Database/Schemas.cs <span class="tag t-new">new</span></td><td><code>Schemas.Application</code> constant (now <code>const string</code>)</td><td class="note">nested in <code>ApplicationDbContext.cs</code></td></tr>
+    <tr><td class="file">DTOs/Habits/HabitQueries.cs <span class="tag t-new">new</span></td><td><code>ProjectToDto()</code> / <code>ProjectToDtoWithTags()</code>, now <code>internal static</code></td><td class="note"><code>HabitMappings.cs</code></td></tr>
+    <tr><td class="file">DTOs/Habits/CreateHabitDtoValidator.cs <span class="tag t-new">new</span></td><td>FluentValidation rules for creating a habit</td><td class="note"><code>CreateHabitDto.cs</code></td></tr>
+    <tr><td class="file">DTOs/Tags/TagQueries.cs <span class="tag t-new">new</span></td><td><code>ProjectToDto()</code> for tags</td><td class="note"><code>TagMappings.cs</code></td></tr>
+    <tr><td class="file">DTOs/Tags/CreateTagDtoValidator.cs <span class="tag t-new">new</span></td><td>FluentValidation rules for creating a tag</td><td class="note"><code>CreateTagDto.cs</code></td></tr>
+    <tr><td class="file">DTOs/Tags/TagsCollectionDto.cs <span class="tag t-new">new</span></td><td><code>TagsCollectionDto : ICollectionResponse&lt;TagDto&gt;</code></td><td class="note"><code>TagDto.cs</code></td></tr>
+  </table>
+
+  <h2><span class="dot"></span>Folder renames</h2>
+  <div class="grid">
+    <div class="card">
+      <h3><span class="tag t-move">moved</span> Configurations</h3>
+      <ul>
+        <li><code>Database/Configuration/</code> <span class="arrow">→</span> <code>Database/Configurations/</code></li>
+        <li class="note">HabitConfiguration · HabitTagConfiguration · TagConfiguration</li>
+        <li class="note">Namespaces updated to <code>…Database.Configurations</code> (also fixed a stray <code>…Data.Configurations</code> typo from the course files). Applied via <code>ApplyConfigurationsFromAssembly</code>, so behavior is unchanged.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag t-move">moved</span> Middleware</h3>
+      <ul>
+        <li><code>Middlewares/</code> <span class="arrow">→</span> <code>Middleware/</code></li>
+        <li class="note">GlobalExceptionHandler · ValidationExceptionHandler</li>
+        <li class="note">Namespaces updated to <code>DevHabit.Api.Middleware</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="dot"></span>Behavior changes &amp; bug fixes pulled in</h2>
+  <table>
+    <tr><th>Area</th><th>Change</th></tr>
+    <tr><td class="file">Program.cs</td><td>Slimmed to a single fluent chain: <code>.AddControllers().AddErrorHandling().AddDatabase().AddObservability().AddApplicationServices()</code>.</td></tr>
+    <tr><td class="file">Error handling <span class="tag t-fix">fix</span></td><td><code>ValidationExceptionHandler</code> is now actually <strong>registered</strong> (it was dead code before). Controllers create habits/tags via <code>ValidateAndThrowAsync</code>, letting the handler produce the 400 response.</td></tr>
+    <tr><td class="file">CreateTagDtoValidator <span class="tag t-fix">fix</span></td><td>Name <code>MinimumLength(50)</code> <span class="arrow">→</span> <code>3</code> (a 50-char minimum was almost certainly a typo); Description <code>MaximumLength(250)</code> <span class="arrow">→</span> <code>50</code>.</td></tr>
+    <tr><td class="file">CreateHabitDtoValidator <span class="tag t-fix">fix</span></td><td><code>Target.Unit</code> is now validated against <code>AllowedUnits</code> instead of <code>AllowedUnitsForBinaryHabits</code> — the old check wrongly rejected valid measurable units.</td></tr>
+    <tr><td class="file">Controllers (×3)</td><td>Dropped the <code>_dbContext</code> backing fields (use the primary-constructor parameter directly), renamed action params (<code>request</code> → <code>createHabitDto</code>, …), and use a consistent “map to DTO then return” style.</td></tr>
+    <tr><td class="file">DatabaseExtensions</td><td><code>ApplyMigrations()</code> <span class="arrow">→</span> <code>ApplyMigrationsAsync()</code> to match the new <code>Program.cs</code>.</td></tr>
+    <tr><td class="file">Entities</td><td><code>Habit</code> sealed; member ordering and enum formatting aligned with the course.</td></tr>
+  </table>
+
+  <h2><span class="dot"></span>Deleted</h2>
+  <div class="card">
+    <ul>
+      <li><span class="tag t-del">del</span> <code>Database/Configuration/{Habit,HabitTag,Tag}Configuration.cs</code> <span class="note">— replaced by <code>Configurations/</code></span></li>
+      <li><span class="tag t-del">del</span> <code>Middlewares/{GlobalExceptionHandler,ValidationExceptionHandler}.cs</code> <span class="note">— replaced by <code>Middleware/</code></span></li>
+    </ul>
+  </div>
+
+  <h2><span class="dot"></span>Intentionally kept (your two scope choices)</h2>
+  <div class="grid">
+    <div class="card keepbox">
+      <h3>Framework &amp; packages</h3>
+      <ul>
+        <li>Stayed on <strong>.NET 10</strong> (3.4 ships <code>net9.0</code>).</li>
+        <li>Kept your trimmed <code>Directory.Packages.props</code> (10.x versions) and <code>DevHabit.Api.csproj</code>.</li>
+        <li>Left <code>.sln</code>, <code>Directory.Build.props</code>, Docker, and <code>Properties/</code> as-is.</li>
+        <li><code>appsettings.Development.json</code> keeps your <code>GSS Encryption Mode=Disable</code> connection string.</li>
+      </ul>
+    </div>
+    <div class="card keepbox">
+      <h3>Property name &amp; analyzer</h3>
+      <ul>
+        <li>Kept <code>Frequency.TimesInPeriod</code> (3.4 uses <code>TimesPerPeriod</code>) — <strong>no EF migration</strong>, DB column unchanged.</li>
+        <li>Restored the <code>[SuppressMessage("…S2326…")]</code> on <code>SortMappingDefinition</code>; your newer SonarAnalyzer (10.27 vs 3.4's 10.6) flags the unused type params, so the suppression is required to build.</li>
+        <li>Existing EF migrations under <code>Migrations/</code> were left untouched.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="dot"></span>Verification</h2>
+  <div class="build">
+    <span class="big">✅</span>
+    <div>
+      <div><strong>dotnet build</strong> — Build succeeded · <strong>0 Warning(s) · 0 Error(s)</strong></div>
+      <div class="note">All warnings-as-errors / SonarAnalyzer / code-style checks pass. A file-by-file diff against 3.4 confirms the only remaining differences are the two intentional carve-outs above.</div>
+    </div>
+  </div>
+
+  <footer>
+    Generated for the DevHabit “Implementing HATEOAS” catch-up · reference: <code>3.4 - Implementing HATEOAS - Start</code>.
+    Nothing has been committed — review with <code>git diff</code> and commit when you're ready.
+  </footer>
+</div>
+</body>
+</html>

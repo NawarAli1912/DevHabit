@@ -40,6 +40,7 @@ public sealed class DataShapingService
     public List<ExpandoObject> ShapeCollectionData<T>(
         IEnumerable<T> entities, 
         string? fields,
+        bool includeLinks,
         Func<T, List<LinkDto>>? linksFactory = null)
     {
         HashSet<string> fieldsSet = fields?
@@ -70,7 +71,7 @@ public sealed class DataShapingService
                 shapedObject[propertyInfo.Name] = propertyInfo.GetValue(entity);
             }
 
-            if (linksFactory is not null)
+            if (includeLinks && linksFactory is not null)
             {
                 shapedObject["links"] = linksFactory(entity);
             }

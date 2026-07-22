@@ -54,6 +54,7 @@ public sealed class HabitsController(
             .Select(HabitQueries.ProjectToDto());
 
         int totalCount = await habitsQuery.CountAsync();
+        bool includeLinks = !string.IsNullOrWhiteSpace(query.Accept) && query.Accept == CustomMediaTypeNames.Application.HateoasMediaType;
 
         List<HabitDto> habits = await habitsQuery
             .Skip((query.Page - 1) * query.PageSize)
@@ -63,13 +64,16 @@ public sealed class HabitsController(
 
         var paginationResult = new PaginationResult<ExpandoObject>
         {
-            Items = dataShapingService.ShapeCollectionData(habits, query.Fields, dto => CreateLinksForHabit(dto.Id, query.Fields)),
+            Items = dataShapingService.ShapeCollectionData(habits, query.Fields, includeLinks, dto => CreateLinksForHabit(dto.Id, query.Fields)),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount
         };
-        
-        paginationResult.Links = CreateLinksForHabits(query, paginationResult.HasNextPage, paginationResult.HasPreviousPage);
+
+        if (includeLinks)
+        { 
+            paginationResult.Links = CreateLinksForHabits(query, paginationResult.HasNextPage, paginationResult.HasPreviousPage);
+        }
 
         return Ok(paginationResult);
     }
@@ -78,6 +82,8 @@ public sealed class HabitsController(
     public async Task<IActionResult> GetHabit(
         string id,
         string? fields,
+        [FromHeader(Name = "Accept")]
+        string? accept,
         DataShapingService dataShapingService)
     {
         if (!dataShapingService.Validate<HabitWithTagsDto>(fields))
@@ -97,11 +103,15 @@ public sealed class HabitsController(
         {
             return NotFound();
         }
-
-        List<LinkDto> links = CreateLinksForHabit(id, fields);
         
         ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
-        shapedHabitDto.TryAdd("links", links);
+
+        bool includeLinks = !string.IsNullOrWhiteSpace(accept) && accept == CustomMediaTypeNames.Application.HateoasMediaType;
+        if (includeLinks)
+        {
+            List<LinkDto> links = CreateLinksForHabit(id, fields);
+            shapedHabitDto.TryAdd("links", links);
+        }
 
         return Ok(shapedHabitDto);
     }
@@ -119,7 +129,7 @@ public sealed class HabitsController(
                 "upsert-tags",
                 HttpMethods.Put,
                 new { habitId = id },
-                nameof(HabitTagsController.ControllerName))
+                HabitTagsController.ControllerName)
         ];
         return links;
     }
